@@ -1,0 +1,95 @@
+version: '3.4'
+
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - node1
+      - node2
+      - node3
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.100
+    volumes:
+      - ${PWD}/orchestrator/orchestrator.conf.json:/etc/orchestrator.conf.json
+
+  haproxy:
+    build:
+      context: .
+      dockerfile: haproxy/Dockerfile
+    command: sh -c '/root/wait-for.sh node1:3306 -- haproxy -f /usr/local/etc/haproxy/haproxy.cfg'
+    ports:
+      - "8080:8080"
+      - "3306:3306"
+      - "3307:3307"
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.150
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  node1:
+    build:
+      context: .
+      dockerfile: mysql/Dockerfile
+    hostname: node1
+    privileged: true
+    environment:
+      - IS_MASTER=true
+      - VIP=172.20.0.200
+      - GATEWAY=172.20.0.1
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.11
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  node2:
+    build:
+      context: .
+      dockerfile: mysql/Dockerfile
+    privileged: true
+    command: sh -c '/root/wait-for.sh node1:3306 -- /root/entrypoint.sh'
+    environment:
+      - VIP=172.20.0.201
+      - GATEWAY=172.20.0.1
+    depends_on:
+      - node1
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.12
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  node3:
+    build:
+      context: .
+      dockerfile: mysql/Dockerfile
+    privileged: true
+    command: sh -c '/root/wait-for.sh node1:3306 -- /root/entrypoint.sh'
+    environment:
+      - VIP=172.20.0.202
+      - GATEWAY=172.20.0.1
+    depends_on:
+      - node1
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.13
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+networks:
+  orchsandbox:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
