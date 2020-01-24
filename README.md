@@ -26,7 +26,7 @@ docker build -t orchestrator:latest .
 
 ### Исследовать топологию кластера
 
-Можно выполнить через UI[http://localhost:3000](http://localhost:3000) или командную строку:
+Можно выполнить через [UI](http://localhost:3000) или командную строку:
 
 ```bash
 # docker-compose exec orchestrator ./orchestrator -c discover -i 172.20.0.200:3306
