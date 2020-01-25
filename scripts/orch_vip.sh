@@ -48,12 +48,12 @@ while getopts ho:s:n:i:I:u: flag; do
 done
 
 
-if [ $OPTIND -eq 1 ]; then 
+if [ ${OPTIND} -eq 1 ]; then 
     echo "No options were passed"; 
     usage;
 fi
 
-shift $(( OPTIND - 1 ));
+shift $(( {OPTIND} - 1 ));
 
 # command for adding our VIP
 cmd_vip_add="ifconfig ${interface} ${vip} up"
@@ -97,23 +97,23 @@ vip_status() {
     fi
 }
 
-echo "[Failover] Master is dead, trying to move VIP from old master to a new one"
+echo "[info] Master is dead, trying to move VIP from old master to a new one"
 
-echo '[Failover] Make sure the VIP is not available...'
+echo '[info] Make sure the VIP is not available...'
 if vip_status; then 
-    echo '[Failover] VIP is pingable so try to down it.'
+    echo '[info] VIP is pingable so try to down it.'
     if vip_stop; then
-        echo "[Failover] ${vip} is removed from ${oldMaster}."
+        echo "[info] ${vip} is removed from ${oldMaster}."
     else
-        echo "[Failover] Couldn't remove ${vip} from ${oldMaster}."
+        echo "[info] Couldn't remove ${vip} from ${oldMaster}."
         exit 1
     fi
 fi
 
-echo '[Failover] Moving VIP to new master.'
+echo '[info] Moving VIP to new master.'
 if vip_start; then
-      echo "[Failover] ${vip} is moved to ${newMaster}."
+      echo "[info] ${vip} is moved to ${newMaster}."
 else
-      echo "[Failover] Can't add ${vip} on ${newMaster}!" 
+      echo "[info] Can't add ${vip} on ${newMaster}!" 
       exit 1
 fi

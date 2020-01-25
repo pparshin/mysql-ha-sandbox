@@ -20,6 +20,7 @@
   "SnapshotTopologiesIntervalHours": 0,
   "InstanceBulkOperationsWaitTimeoutSeconds": 10,
   "HostnameResolveMethod": "none",
+  "MySQLHostnameResolveMethod": "@@report_host",
   "SkipBinlogServerUnresolveCheck": true,
   "ExpiryHostnameResolvesMinutes": 60,
   "RejectHostnameResolvePattern": "",

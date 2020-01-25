@@ -1,6 +1,8 @@
 #!/bin/bash
 
-mysql -h 127.0.0.1 -u admin -padmin -P 3306 -e "
+export MYSQL_PWD=admin
+
+mysql -h 127.0.0.1 -u admin -P 3306 -e "
 CREATE DATABASE IF NOT EXISTS sandbox;
 USE sandbox;
 CREATE TABLE IF NOT EXISTS sandbox.test (

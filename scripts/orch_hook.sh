@@ -19,7 +19,7 @@ logfile="/var/log/orch_hook.log"
 node1=( eth0:0 "172.20.0.200" root)
 
 # https://github.com/github/orchestrator/blob/master/docs/failure-detection.md#deadmaster
-if [[ ${failureType} == "DeadMaster" ]]; then
+if [[ ${failureType} == "DeadMaster" || ${failureType} == "UnreachableMaster" ]]; then
 
 	array=${failureClusterAlias}
 	interface=$array[0]
@@ -32,7 +32,6 @@ if [[ ${failureType} == "DeadMaster" ]]; then
 		echo "New master is: ${newMaster}"
 		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -o ${oldMaster}" | tee ${logfile}
 		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -o ${oldMaster}
-		#mysql -h ${newMaster} -u ${dbUser} < /usr/local/bin/orch_event.sql
 	else
 		echo "Cluster does not exist!" | tee ${logfile}
 	fi
