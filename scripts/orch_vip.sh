@@ -38,7 +38,8 @@ while getopts ho:s:n:i:I:g:u: flag; do
       sshUser="${OPTARG}";
       ;;
     g)
-      gateway="${OPTARG}"
+      gateway="${OPTARG}";
+      ;;
     h)
       usage;
       exit 0;
@@ -65,7 +66,7 @@ cmd_vip_del="ifconfig ${interface} down"
 # command for discovering if our VIP is enabled
 cmd_vip_chk="ifconfig | grep 'inet addr' | grep ${vip}"
 # command for sending gratuitous ARP to announce IP move
-cmd_arp_fix="arping -c 3 ${vip} ${gateway}"
+cmd_arp_fix="arping -c 3 -s ${vip} ${gateway}"
 
 vip_stop() {
     rc=0
@@ -108,8 +109,8 @@ if vip_status; then
     if vip_stop; then
         echo "[info] ${vip} is removed from ${oldMaster}."
     else
+        # We do not treat it as a fatal error.
         echo "[info] Couldn't remove ${vip} from ${oldMaster}."
-        exit 1
     fi
 fi
 
