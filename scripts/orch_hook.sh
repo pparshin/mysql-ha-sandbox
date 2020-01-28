@@ -5,9 +5,13 @@ failureType=${1}
 failureClusterAlias=${2}
 oldMaster=${3}
 newMaster=${4}
+
 # Credentials to connect to databases.
 dbUser="orchestrator"
 export MYSQL_PWD="orchpass"
+
+masterVIP=172.20.0.200
+subnetGateway=172.20.0.1
 
 logfile="/var/log/orch_hook.log"
 
@@ -16,10 +20,10 @@ logfile="/var/log/orch_hook.log"
 # “172.20.0.200” is the VIP on this cluster and 
 # “root is the SSH user. 
 # If we have multiple clusters, we have to add more arrays like this with the cluster details.
-node1=( eth0:0 "172.20.0.200" root)
+node1=( eth0:0 "${masterVIP}" root)
 
 # https://github.com/github/orchestrator/blob/master/docs/failure-detection.md#deadmaster
-if [[ ${failureType} == "DeadMaster" || ${failureType} == "UnreachableMaster" ]]; then
+if [[ ${failureType} == "DeadMaster" ]]; then
 
 	array=${failureClusterAlias}
 	interface=$array[0]
@@ -30,8 +34,8 @@ if [[ ${failureType} == "DeadMaster" || ${failureType} == "UnreachableMaster" ]]
 		echo $(date)
 		echo "Revocering from: ${failureType}"
 		echo "New master is: ${newMaster}"
-		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -o ${oldMaster}" | tee ${logfile}
-		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -o ${oldMaster}
+		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster}" | tee ${logfile}
+		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster} | tee ${logfile}
 	else
 		echo "Cluster does not exist!" | tee ${logfile}
 	fi

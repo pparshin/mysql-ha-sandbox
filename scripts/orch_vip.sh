@@ -2,7 +2,7 @@
 
 function usage {
   cat << EOF
- usage: $0 [-h] [-o old master ] [-s ssh options] [-n new master] [-i interface] [-I] [-u SSH user]
+ usage: $0 [-h] [-o old master ] [-s ssh options] [-n new master] [-i interface] [-I] [-g gateway] [-u SSH user]
  
  OPTIONS:
     -h        Show this message
@@ -11,31 +11,34 @@ function usage {
     -n string New master hostname or IP address
     -i string Interface, e.g. eth0:0
     -I string Virtual IP
+    -g string Subnet gateway 
     -u string SSH user
 EOF
 
 }
 
-while getopts ho:s:n:i:I:u: flag; do
+while getopts ho:s:n:i:I:g:u: flag; do
   case $flag in
     o)
-      oldMaster="$OPTARG";
+      oldMaster="${OPTARG}";
       ;;
     s)
       sshOptions="${OPTARG}";
       ;;
     n)
-      newMaster="$OPTARG";
+      newMaster="${OPTARG}";
       ;;
     i)
-      interface="$OPTARG";
+      interface="${OPTARG}";
       ;;
     I)
-      vip="$OPTARG";
+      vip="${OPTARG}";
       ;;
     u)
-      sshUser="$OPTARG";
+      sshUser="${OPTARG}";
       ;;
+    g)
+      gateway="${OPTARG}"
     h)
       usage;
       exit 0;
@@ -62,7 +65,7 @@ cmd_vip_del="ifconfig ${interface} down"
 # command for discovering if our VIP is enabled
 cmd_vip_chk="ifconfig | grep 'inet addr' | grep ${vip}"
 # command for sending gratuitous ARP to announce IP move
-cmd_arp_fix="arping -c 3 ${vip} 172.20.0.1"
+cmd_arp_fix="arping -c 3 ${vip} ${gateway}"
 
 vip_stop() {
     rc=0
