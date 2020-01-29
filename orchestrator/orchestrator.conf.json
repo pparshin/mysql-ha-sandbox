@@ -1,5 +1,5 @@
 {
-  "Debug": true,
+  "Debug": false,
   "EnableSyslog": false,
   "ListenAddress": ":3000",
   "MySQLTopologyUser": "orchestrator",
@@ -94,6 +94,7 @@
     "echo 'Detected {failureType} on {failureCluster}. Affected replicas: {countSlaves}' >> /tmp/recovery.log"
   ],
   "PreFailoverProcesses": [
+    "/usr/local/bin/orch_failure_detection.sh {failedHost} >> /tmp/orch.log",
     "echo 'Will recover from {failureType} on {failureCluster}' >> /tmp/recovery.log"
   ],
   "PostFailoverProcesses": [
