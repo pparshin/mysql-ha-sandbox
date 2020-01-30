@@ -86,6 +86,24 @@ services:
       - NET_ADMIN
       - NET_RAW
 
+  node4:
+    build:
+      context: .
+      dockerfile: mysql/Dockerfile
+    privileged: true
+    command: sh -c '/root/wait-for.sh node1:3306 -- /root/entrypoint.sh'
+    environment:
+      - VIP=172.20.0.203
+      - GATEWAY=172.20.0.1
+    depends_on:
+      - node1
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.14
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
 networks:
   orchsandbox:
     driver: bridge

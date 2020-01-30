@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # This arguments are passed from orchestrator.
 failureType=${1}
 failureClusterAlias=${2}
@@ -10,6 +12,7 @@ newMaster=${4}
 dbUser="orchestrator"
 export MYSQL_PWD="orchpass"
 
+# Network settings.
 masterVIP=172.20.0.200
 subnetGateway=172.20.0.1
 
@@ -22,8 +25,11 @@ logfile="/var/log/orch_hook.log"
 # If we have multiple clusters, we have to add more arrays like this with the cluster details.
 node1=( eth0:0 "${masterVIP}" root)
 
-# https://github.com/github/orchestrator/blob/master/docs/failure-detection.md#deadmaster
-if [[ ${failureType} == "DeadMaster" ]]; then
+# Failure types which we should recover from.
+# https://github.com/github/orchestrator/blob/master/docs/failure-detection.md
+failureTypes=( "DeadMaster" "DeadMasterAndSomeSlaves" )
+
+if [[ " ${failureTypes[@]} " =~ " ${failureType} " ]]; then
 
 	array=${failureClusterAlias}
 	interface=$array[0]
@@ -39,5 +45,10 @@ if [[ ${failureType} == "DeadMaster" ]]; then
 	else
 		echo "Cluster does not exist!" | tee ${logfile}
 	fi
+
+else
+
+	echo "Recovery is not supported for this failure ${failureType}!"
+	exit 1
 
 fi

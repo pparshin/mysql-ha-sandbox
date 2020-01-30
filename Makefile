@@ -41,3 +41,7 @@ node_drop: ## Add DROP rule in iptables in order to block MySQL instance
 .PHONY: node_accept
 node_accept: ## Remove DROP rule in iptables in order to return MySQL instance
 	docker-compose exec ${n} iptables -D INPUT -p tcp --dport 3306 -j DROP
+
+.PHONY: node_prefer
+node_prefer:
+	docker-compose exec orchestrator orchestrator-client -c register-candidate -i ${fqdn} --promotion-rule prefer

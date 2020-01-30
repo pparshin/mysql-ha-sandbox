@@ -85,7 +85,7 @@
   "RecoveryPeriodBlockSeconds": 600,
   "RecoveryIgnoreHostnameFilters": [],
   "RecoverMasterClusterFilters": [
-    ".*"
+    "node1"
   ],
   "RecoverIntermediateMasterClusterFilters": [
     "_intermediate_master_pattern_"
@@ -113,6 +113,7 @@
   "ApplyMySQLPromotionAfterMasterFailover": true,
   "MasterFailoverDetachSlaveMasterHost": false,
   "MasterFailoverLostInstancesDowntimeMinutes": 1,
+  "DelayMasterPromotionIfSQLThreadNotUpToDate": true,
   "PostponeSlaveRecoveryOnLagMinutes": 0,
   "OSCIgnoreHostnameFilters": [],
   "GraphiteAddr": "",
