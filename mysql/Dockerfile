@@ -11,7 +11,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
   iputils-arping \
   iputils-ping \
   openssh-server \
-  iptables
+  iptables \
+  screen
 
 RUN mkdir /var/run/sshd
 RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
