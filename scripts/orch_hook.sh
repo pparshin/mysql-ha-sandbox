@@ -8,6 +8,9 @@ failureClusterAlias=${2}
 oldMaster=${3}
 newMaster=${4}
 
+# SSH options used to connect to servers when moving VIP.
+sshOptions="-o ConnectTimeout=5"
+
 # Credentials to connect to databases.
 dbUser="orchestrator"
 export MYSQL_PWD="orchpass"
@@ -16,7 +19,7 @@ export MYSQL_PWD="orchpass"
 masterVIP=172.20.0.200
 subnetGateway=172.20.0.1
 
-logfile="/var/log/orch_hook.log"
+logfile="/tmp/orch_hook.log"
 
 # Where "node1" is the name of the cluster, 
 # “eth0:0” is the name of the interface where the VIP should be added, 
@@ -40,8 +43,8 @@ if [[ " ${failureTypes[@]} " =~ " ${failureType} " ]]; then
 		echo $(date)
 		echo "Revocering from: ${failureType}"
 		echo "New master is: ${newMaster}"
-		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster}" | tee ${logfile}
-		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster} | tee ${logfile}
+		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s \"${sshOptions}\" -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster}" | tee ${logfile}
+		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s "${sshOptions}" -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster} | tee ${logfile}
 	else
 		echo "Cluster does not exist!" | tee ${logfile}
 	fi

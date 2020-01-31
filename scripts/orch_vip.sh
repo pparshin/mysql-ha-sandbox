@@ -51,14 +51,6 @@ while getopts ho:s:n:i:I:g:u: flag; do
   esac
 done
 
-
-if [ ${OPTIND} -eq 1 ]; then 
-    echo "No options were passed"; 
-    usage;
-fi
-
-shift $(( {OPTIND} - 1 ));
-
 # command for adding our VIP
 cmd_vip_add="ifconfig ${interface} ${vip} up"
 # command for deleting our VIP

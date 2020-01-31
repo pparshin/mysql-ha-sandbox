@@ -10,18 +10,18 @@ timeout=10
 is_icmp_pingable() {
   echo "[info] trying ICMP ping"
   if ping -w ${timeout} ${master}; then
-    return 0
+    return 1
   else
-  	return 1
+    return 0
   fi
 }
 
 is_tcp_pingable() {
   echo "[info] trying TCP ping"
   if nc -w ${timeout} -z ${master} 3306; then
-    return 0
+    return 1
   else
-  	return 1
+    return 0
   fi
 }
 
@@ -39,7 +39,7 @@ wait ${by_icmp_pid} || by_icmp=$?
 echo "[info] TCP ping result: ${by_tcp}"
 echo "[info] ICMP ping result: ${by_icmp}"
 
-if [ "${by_tcp}" = 0 ] && [ "${by_icmp}" = 0 ]; then
+if [ "${by_tcp}" = 1 ] && [ "${by_icmp}" = 1 ]; then
   echo "[warn] Master is pingable (ICMP and TCP) so it is alive - false trigger?"
   exit 1 # Stop recovery process
 else
