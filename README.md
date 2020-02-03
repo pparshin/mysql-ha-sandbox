@@ -110,3 +110,20 @@ docker-compose stop node1
 ### Долго выполняется шаг Regrouping replicas via GTID
 
 Смотри [issue](https://github.com/github/orchestrator/issues/648)
+
+### Как вернуть старый мастер в новый кластер?
+
+На старом мастере:
+
+```sql
+CHANGE MASTER TO MASTER_HOST='172.20.0.200', MASTER_PORT=3306, MASTER_USER='repl', MASTER_PASSWORD='repl', MASTER_AUTO_POSITION=1;
+CHANGE MASTER TO MASTER_CONNECT_RETRY=1, MASTER_RETRY_COUNT=86400;
+START SLAVE;
+```
+
+Обновить оркестратор:
+
+```bash
+# -i - это старый мастер, -d - куда переносим (новый мастер)
+docker-compose exec orchestrator ./orchestrator relocate -i 172.20.0.11 -d 172.20.0.12
+```

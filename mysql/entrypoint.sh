@@ -50,6 +50,7 @@ if [ ! -z "${IS_MASTER}" ]; then
   SET @@SESSION.SQL_LOG_BIN=0;
   
   CREATE DATABASE IF NOT EXISTS sandbox;
+  CREATE DATABASE IF NOT EXISTS meta;
 
   CREATE USER 'repl'@'%' IDENTIFIED WITH mysql_native_password BY 'repl';
   GRANT REPLICATION SLAVE ON *.* TO 'repl'@'172.20.0.%' IDENTIFIED BY 'repl';
@@ -62,7 +63,7 @@ if [ ! -z "${IS_MASTER}" ]; then
   GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'%';
   GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'localhost' IDENTIFIED BY 'orchpass';
   GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'localhost';
-  GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'localhost' IDENTIFIED BY 'orchpass';
+  GRANT ALL PRIVILEGES ON meta.* TO 'orchestrator'@'%';
 
   FLUSH PRIVILEGES;
 
@@ -73,6 +74,7 @@ else
   SET @@SESSION.SQL_LOG_BIN=0;
   
   CREATE DATABASE IF NOT EXISTS sandbox;
+  CREATE DATABASE IF NOT EXISTS meta;
 
   CREATE USER 'repl'@'%' IDENTIFIED WITH mysql_native_password BY 'repl';
   GRANT REPLICATION SLAVE ON *.* TO 'repl'@'172.20.0.%' IDENTIFIED BY 'repl';
@@ -84,7 +86,7 @@ else
   GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'%';
   GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'localhost' IDENTIFIED BY 'orchpass';
   GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'localhost';
-  GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'localhost' IDENTIFIED BY 'orchpass';
+  GRANT ALL PRIVILEGES ON meta.* TO 'orchestrator'@'%';
 
   FLUSH PRIVILEGES;
 

@@ -15,18 +15,16 @@ sshOptions="-o ConnectTimeout=5"
 dbUser="orchestrator"
 export MYSQL_PWD="orchpass"
 
-# Network settings.
-masterVIP=172.20.0.200
-subnetGateway=172.20.0.1
-
 logfile="/tmp/orch_hook.log"
 
-# Where "node1" is the name of the cluster, 
-# “eth0:0” is the name of the interface where the VIP should be added, 
-# “172.20.0.200” is the VIP on this cluster and 
-# “root is the SSH user. 
+# Where "db_test" is the name of the cluster, 
+# "eth0:0" is the name of the interface where the VIP should be added, 
+# "172.20.0.200" is the VIP on this cluster,
+# "172.20.0.1" is the gateway used to update by arping,
+# "root" is the SSH user.
+#
 # If we have multiple clusters, we have to add more arrays like this with the cluster details.
-node1=( eth0:0 "${masterVIP}" root)
+db_test=( eth0:0 "172.20.0.200" "172.20.0.1" root)
 
 # Failure types which we should recover from.
 # https://github.com/github/orchestrator/blob/master/docs/failure-detection.md
@@ -37,14 +35,15 @@ if [[ " ${failureTypes[@]} " =~ " ${failureType} " ]]; then
 	array=${failureClusterAlias}
 	interface=$array[0]
 	IP=$array[1]
-	user=$array[2]
+	gateway=$array[2]
+	user=$array[3]
 
 	if [ ! -z ${!IP} ] ; then
 		echo $(date)
 		echo "Revocering from: ${failureType}"
 		echo "New master is: ${newMaster}"
-		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s \"${sshOptions}\" -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster}" | tee ${logfile}
-		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s "${sshOptions}" -I ${!IP} -u ${!user} -g ${subnetGateway} -o ${oldMaster} | tee ${logfile}
+		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s \"${sshOptions}\" -I ${!IP} -u ${!user} -g ${gateway} -o ${oldMaster}" | tee ${logfile}
+		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s "${sshOptions}" -I ${!IP} -u ${!user} -g ${gateway} -o ${oldMaster} | tee ${logfile}
 	else
 		echo "Cluster does not exist!" | tee ${logfile}
 	fi

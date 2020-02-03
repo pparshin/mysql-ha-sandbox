@@ -41,8 +41,8 @@
     "*"
   ],
   "SlaveLagQuery": "",
-  "DetectClusterAliasQuery": "SELECT SUBSTRING_INDEX(@@hostname, '.', 1)",
-  "DetectClusterDomainQuery": "",
+  "DetectClusterAliasQuery": "select ifnull(max(cluster_name), '') as cluster_alias from meta.cluster where anchor=1",
+  "DetectClusterDomainQuery": "select ifnull(max(cluster_domain), '') as cluster_domain from meta.cluster where anchor=1",
   "DetectInstanceAliasQuery": "",
   "DetectPromotionRuleQuery": "",
   "DataCenterPattern": "[.]([^.]+)[.][^.]+",
@@ -85,7 +85,7 @@
   "RecoveryPeriodBlockSeconds": 600,
   "RecoveryIgnoreHostnameFilters": [],
   "RecoverMasterClusterFilters": [
-    "node1"
+    "db_test"
   ],
   "RecoverIntermediateMasterClusterFilters": [
     "_intermediate_master_pattern_"
