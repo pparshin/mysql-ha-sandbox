@@ -42,8 +42,8 @@ if [[ " ${failureTypes[@]} " =~ " ${failureType} " ]]; then
 		echo $(date)
 		echo "Revocering from: ${failureType}"
 		echo "New master is: ${newMaster}"
-		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s \"${sshOptions}\" -I ${!IP} -u ${!user} -g ${gateway} -o ${oldMaster}" | tee ${logfile}
-		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s "${sshOptions}" -I ${!IP} -u ${!user} -g ${gateway} -o ${oldMaster} | tee ${logfile}
+		echo "/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s \"${sshOptions}\" -I ${!IP} -u ${!user} -g ${!gateway} -o ${oldMaster}" | tee ${logfile}
+		/usr/local/bin/orch_vip.sh -n ${newMaster} -i ${!interface} -s "${sshOptions}" -I ${!IP} -u ${!user} -g ${!gateway} -o ${oldMaster} | tee ${logfile}
 	else
 		echo "Cluster does not exist!" | tee ${logfile}
 	fi

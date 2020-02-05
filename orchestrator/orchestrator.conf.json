@@ -1,6 +1,6 @@
 {
-  "Debug": false,
-  "EnableSyslog": false,
+  "Debug": true,
+  "EnableSyslog": true,
   "ListenAddress": ":3000",
   "MySQLTopologyUser": "orchestrator",
   "MySQLTopologyPassword": "orchpass",
@@ -40,13 +40,14 @@
   "PowerAuthUsers": [
     "*"
   ],
-  "SlaveLagQuery": "",
+  "ClusterNameToAlias": {},
+  "ReplicationLagQuery": "",
   "DetectClusterAliasQuery": "select ifnull(max(cluster_name), '') as cluster_alias from meta.cluster where anchor=1",
   "DetectClusterDomainQuery": "select ifnull(max(cluster_domain), '') as cluster_domain from meta.cluster where anchor=1",
   "DetectInstanceAliasQuery": "",
   "DetectPromotionRuleQuery": "",
-  "DataCenterPattern": "[.]([^.]+)[.][^.]+",
-  "PhysicalEnvironmentPattern": "[.]([^.]+[.][^.]+)",
+  "DataCenterPattern": "[.]([^.]+)[.][^.]+[.]mydomain[.]com",
+  "PhysicalEnvironmentPattern": "[.]([^.]+[.][^.]+)[.]mydomain[.]com",
   "PromotionIgnoreHostnameFilters": [],
   "DetectSemiSyncEnforcedQuery": "",
   "ServeAgentsHttp": false,
@@ -81,8 +82,7 @@
   "SkipBinlogEventsContaining": [],
   "ReduceReplicationAnalysisCount": true,
   "FailureDetectionPeriodBlockMinutes": 60,
-  "RecoveryPollSeconds": 5,
-  "RecoveryPeriodBlockSeconds": 600,
+  "RecoveryPeriodBlockSeconds": 3600,
   "RecoveryIgnoreHostnameFilters": [],
   "RecoverMasterClusterFilters": [
     "db_test"
@@ -98,7 +98,7 @@
     "echo 'Will recover from {failureType} on {failureCluster}' >> /tmp/recovery.log"
   ],
   "PostFailoverProcesses": [
-    "/usr/local/bin/orch_hook.sh {failureType} {failureClusterAlias} {failedHost} {successorHost} >> /tmp/orch.log",
+    "/usr/local/bin/orch_hook.sh {failureType} {failureClusterAlias} {failedHost} {successorHost}",
     "echo '(for all types) Recovered from {failureType} on {failureCluster}. Failed: {failedHost}:{failedPort}; Successor: {successorHost}:{successorPort}' >> /tmp/recovery.log"
   ],
   "PostUnsuccessfulFailoverProcesses": [],
@@ -108,15 +108,22 @@
   "PostIntermediateMasterFailoverProcesses": [
     "echo 'Recovered from {failureType} on {failureCluster}. Failed: {failedHost}:{failedPort}; Successor: {successorHost}:{successorPort}' >> /tmp/recovery.log"
   ],
+  "PostGracefulTakeoverProcesses": [
+    "echo 'Planned takeover complete' >> /tmp/recovery.log"
+  ],
   "CoMasterRecoveryMustPromoteOtherCoMaster": true,
   "DetachLostSlavesAfterMasterFailover": true,
   "ApplyMySQLPromotionAfterMasterFailover": true,
-  "MasterFailoverDetachSlaveMasterHost": false,
-  "MasterFailoverLostInstancesDowntimeMinutes": 1,
+  "PreventCrossDataCenterMasterFailover": false,
+  "PreventCrossRegionMasterFailover": false,
+  "MasterFailoverDetachReplicaMasterHost": false,
+  "MasterFailoverLostInstancesDowntimeMinutes": 0,
   "DelayMasterPromotionIfSQLThreadNotUpToDate": true,
-  "PostponeSlaveRecoveryOnLagMinutes": 0,
+  "PostponeReplicaRecoveryOnLagMinutes": 0,
   "OSCIgnoreHostnameFilters": [],
   "GraphiteAddr": "",
   "GraphitePath": "",
-  "GraphiteConvertHostnameDotsToUnderscores": true
+  "GraphiteConvertHostnameDotsToUnderscores": true,
+  "ConsulAddress": "",
+  "ConsulAclToken": ""
 }
