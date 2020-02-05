@@ -100,7 +100,7 @@ docker-compose stop node1
 Может использоваться в хуках: 
 
  - Шаблон подстановки `{failureClusterDomain}`,
- - Переменная окружения `ORC_FAILURE_CLUSTER_DOMAIN` ((topology_recovery.go#L314)[https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L314]).
+ - Переменная окружения `ORC_FAILURE_CLUSTER_DOMAIN` ([topology_recovery.go#L314](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L314)).
 
 ### Переключение только на неотстающий слейв
 
