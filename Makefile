@@ -12,15 +12,21 @@ up: ## Run all containers
 
 .PHONY: down
 down: ## Stop all containers
-	docker-compose down
+	docker rm -f $$(docker ps -aq --filter name=replica*); \
+	docker-compose down -v;
 
 .PHONY: clean
 clean: ## Stop all containers and clean volumes and local images
+	docker rm -f $$(docker ps -aq --filter name=replica*); \
 	docker-compose down -v --rmi local --remove-orphans	
 
 .PHONY: ps
 ps: ## Show status for all containers
 	docker-compose ps
+
+.PHONE: scale
+scale: ## Up n MySQL replics
+	scripts/scale.sh ${n}
 
 .PHONY: load_schema
 load_schema: ## Load default schema on MySQL
@@ -36,11 +42,11 @@ discover: ## Run MySQL orchestrator cluster topology discovering process
 
 .PHONY: node_drop
 node_drop: ## Add DROP rule in iptables in order to block MySQL instance
-	docker-compose exec ${n} iptables -A INPUT -p tcp --dport 3306 -j DROP
+	docker exec -it ${n} iptables -A INPUT -p tcp --dport 3306 -j DROP
 
 .PHONY: node_accept
 node_accept: ## Remove DROP rule in iptables in order to return MySQL instance
-	docker-compose exec ${n} iptables -D INPUT -p tcp --dport 3306 -j DROP
+	docker exec -it ${n} iptables -D INPUT -p tcp --dport 3306 -j DROP
 
 .PHONY: node_prefer
 node_prefer:
