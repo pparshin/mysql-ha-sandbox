@@ -20,6 +20,4 @@ RUN sed -i -e "s/#RAFT_BIND/${RAFT_BIND}/g" /etc/orchestrator.conf.json
 RUN mkdir -p /var/lib/orchestrator
 RUN chmod -R 755 /var/lib/orchestrator
 
-ENV ORCHESTRATOR_API "http://haproxy:80/api"
-
 CMD /entrypoint.sh

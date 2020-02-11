@@ -6,7 +6,7 @@ help: ## This help
 build: ## Build the containers
 	docker build -t orchestrator:latest orchestrator/source; \
 	docker-compose build $(name); \
-	ln -s ../orchestrator/source/resources/bin/orchestrator-client scripts/orchestrator-client
+	ln -fs ../orchestrator/source/resources/bin/orchestrator-client scripts/orchestrator-client
 
 .PHONY: up
 up: ## Run all containers
@@ -49,6 +49,10 @@ node_drop: ## Add DROP rule in iptables in order to block MySQL instance
 .PHONY: node_accept
 node_accept: ## Remove DROP rule in iptables in order to return MySQL instance
 	docker exec -it ${n} iptables -D INPUT -p tcp --dport 3306 -j DROP
+
+.PHONY: node_delay
+node_delay: ## Add delay to log replication
+	docker exec -it ${n} mysql -e "STOP SLAVE; CHANGE MASTER TO MASTER_DELAY = ${s}; START SLAVE;"
 
 .PHONY: node_prefer
 node_prefer:
