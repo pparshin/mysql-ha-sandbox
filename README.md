@@ -26,17 +26,16 @@ docker build -t orchestrator:latest .
 
 ### Исследовать топологию кластера
 
-Можно выполнить через [UI](http://localhost:3000) или командную строку:
+Можно выполнить через [UI](http://localhost:80) или командную строку:
 
 ```bash
-# docker-compose exec orchestrator ./orchestrator -c discover -i 172.20.0.200:3306
 make discover
 ```
 
 Вывести текущую топологию:
 
 ```bash
-docker-compose exec orchestrator ./orchestrator -c topology -i 172.20.0.200:3306 cli
+make orchestrator-client c="-c topology -i db_test cli"
 ```
 
 ## VIP (виртуальные IP)

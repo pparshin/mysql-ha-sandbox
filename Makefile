@@ -4,7 +4,9 @@ help: ## This help
 
 .PHONY: build
 build: ## Build the containers
-	docker-compose build $(name)
+	docker build -t orchestrator:latest orchestrator/source; \
+	docker-compose build $(name); \
+	ln -s ../orchestrator/source/resources/bin/orchestrator-client scripts/orchestrator-client
 
 .PHONY: up
 up: ## Run all containers
@@ -38,7 +40,7 @@ try_sql: ## Execute read/write SQL statements N times
 
 .PHONY: discover
 discover: ## Run MySQL orchestrator cluster topology discovering process
-	docker-compose exec orchestrator ./orchestrator -c discover -i 172.20.0.200:3306
+	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c discover -i 172.20.0.200:3306
 
 .PHONY: node_drop
 node_drop: ## Add DROP rule in iptables in order to block MySQL instance
@@ -50,4 +52,8 @@ node_accept: ## Remove DROP rule in iptables in order to return MySQL instance
 
 .PHONY: node_prefer
 node_prefer:
-	docker-compose exec orchestrator orchestrator-client -c register-candidate -i ${fqdn} --promotion-rule prefer
+	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c register-candidate -i ${fqdn} --promotion-rule prefer
+
+.PHONY: orchestrator-client
+orchestrator-client: ## Run orchestrator-client command
+	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client ${c}

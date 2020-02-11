@@ -1,19 +1,35 @@
 version: '3.4'
 
 services:
-  orchestrator:
+  orchestrator-node-1:
     build:
       context: .
       dockerfile: orchestrator/Dockerfile
-    ports:
-      - "3000:3000"
-    depends_on:
-      - node1
+      args:
+        - RAFT_BIND=orchestrator-node-1
     networks:
       orchsandbox:
-        ipv4_address: 172.20.0.100
-    volumes:
-      - ${PWD}/orchestrator/orchestrator.conf.json:/etc/orchestrator.conf.json
+        ipv4_address: 172.20.0.170
+
+  orchestrator-node-2:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+      args:
+        - RAFT_BIND=orchestrator-node-2
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.171
+
+  orchestrator-node-3:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+      args:
+        - RAFT_BIND=orchestrator-node-3
+    networks:
+      orchsandbox:
+        ipv4_address: 172.20.0.172
 
   haproxy:
     build:
@@ -24,6 +40,7 @@ services:
       - "8080:8080"
       - "3306:3306"
       - "3307:3307"
+      - "80:80"
     networks:
       orchsandbox:
         ipv4_address: 172.20.0.150

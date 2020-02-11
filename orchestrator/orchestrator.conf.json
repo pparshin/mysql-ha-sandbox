@@ -1,6 +1,6 @@
 {
   "Debug": true,
-  "EnableSyslog": true,
+  "EnableSyslog": false,
   "ListenAddress": ":3000",
   "MySQLTopologyUser": "orchestrator",
   "MySQLTopologyPassword": "orchpass",
@@ -11,7 +11,7 @@
   "MySQLTopologySSLSkipVerify": true,
   "MySQLTopologyUseMutualTLS": false,
   "BackendDB": "sqlite",
-  "SQLite3DataFile": "/usr/local/orchestrator/orchestrator.db",
+  "SQLite3DataFile": "/var/lib/orchestrator/orchestrator.db",
   "MySQLConnectTimeoutSeconds": 1,
   "DefaultInstancePort": 3306,
   "DiscoverByShowSlaveHosts": true,
@@ -125,5 +125,14 @@
   "GraphitePath": "",
   "GraphiteConvertHostnameDotsToUnderscores": true,
   "ConsulAddress": "",
-  "ConsulAclToken": ""
+  "ConsulAclToken": "",
+  "RaftEnabled": true,
+  "RaftDataDir": "/var/lib/orchestrator",
+  "RaftBind": "#RAFT_BIND",
+  "DefaultRaftPort": 10008,
+  "RaftNodes": [
+    "orchestrator-node-1",
+    "orchestrator-node-2",
+    "orchestrator-node-3"
+  ]
 }
