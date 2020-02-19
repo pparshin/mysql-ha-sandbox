@@ -58,7 +58,7 @@ cmd_vip_del="ifconfig ${interface} down"
 # command for discovering if our VIP is enabled
 cmd_vip_chk="ifconfig | grep 'inet addr' | grep ${vip}"
 # command for sending gratuitous ARP to announce IP move
-cmd_arp_fix="arping -c 3 -s ${vip} ${gateway}"
+cmd_arp_fix="arping -c 3 -S ${vip} ${gateway}"
 cmd_arp_force_fix="while true; do ${cmd_arp_fix}; sleep 60; done"
 
 vipRemovedFromOldMaster=false
