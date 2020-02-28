@@ -41,12 +41,12 @@ fi
 
 echo "[Entrypoint] Populate TimeZone..."
 # With "( .. ) 2> /dev/null" suppress any std[out/err].
-( mysql_tzinfo_to_sql /usr/share/zoneinfo | "${CMD[@]}" --force ) 2> /dev/null
+(mysql_tzinfo_to_sql /usr/share/zoneinfo | "${CMD[@]}" --force) 2>/dev/null
 
 echo "[Entrypoint] Create users and config replication."
 
 if [ ! -z "${IS_MASTER}" ]; then
-"${CMD[@]}" <<-EOSQL
+  "${CMD[@]}" <<-EOSQL
   SET @@SESSION.SQL_LOG_BIN=0;
   
   CREATE DATABASE IF NOT EXISTS sandbox;
@@ -70,7 +70,7 @@ if [ ! -z "${IS_MASTER}" ]; then
   SET @@SESSION.SQL_LOG_BIN=1;
 EOSQL
 else
-"${CMD[@]}" <<-EOSQL
+  "${CMD[@]}" <<-EOSQL
   SET @@SESSION.SQL_LOG_BIN=0;
   
   CREATE DATABASE IF NOT EXISTS sandbox;
@@ -103,10 +103,10 @@ mysqladmin shutdown -uroot --socket="$SOCKET"
 
 echo '[Entrypoint] MySQL init process done. Ready for start up.'
 
-if [ ! -z "${VIP}" ]; then
+if [[ -n "${VIP}" ]]; then
   echo "[Entrypoint] Assign VIP: ${VIP}"
-  ifconfig eth0:0 ${VIP}
-  arping -s ${VIP} -c 3 ${GATEWAY}
+  ifconfig eth0:0 "${VIP}"
+  arping -c 3 -S "${VIP}" -I eth0:0 "${GATEWAY}"
 fi
 
 echo '[Entrypoint] Starting sshd up...'

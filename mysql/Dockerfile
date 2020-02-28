@@ -11,8 +11,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
   iputils-ping \
   openssh-server \
   iptables \
-  screen \
-  arping
+  screen
 
 RUN mkdir /var/run/sshd
 RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
@@ -22,6 +21,8 @@ RUN chmod 600 /root/.ssh/authorized_keys
 RUN apt-get install -y mysql-server-5.7 \
                        mysql-client-core-5.7 \
                        mysql-utilities
+
+RUN apt-get install -y arping
 
 COPY mysql/my.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
 RUN chown root:root /etc/mysql/mysql.conf.d/mysqld.cnf
