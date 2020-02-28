@@ -1,7 +1,9 @@
 #!/bin/bash
 
-function usage {
-  cat << EOF
+#set -x
+
+function usage() {
+  cat <<EOF
  usage: $0 [-h] [-o old master ] [-s ssh options] [-n new master] [-i interface] [-I] [-g gateway] [-u SSH user]
  
  OPTIONS:
@@ -19,37 +21,42 @@ EOF
 
 while getopts ho:s:n:i:I:g:u: flag; do
   case $flag in
-    o)
-      oldMaster="${OPTARG}";
-      ;;
-    s)
-      sshOptions="${OPTARG}";
-      ;;
-    n)
-      newMaster="${OPTARG}";
-      ;;
-    i)
-      interface="${OPTARG}";
-      ;;
-    I)
-      vip="${OPTARG}";
-      ;;
-    u)
-      sshUser="${OPTARG}";
-      ;;
-    g)
-      gateway="${OPTARG}";
-      ;;
-    h)
-      usage;
-      exit 0;
-      ;;
-    *)
-      usage;
-      exit 1;
-      ;;
+  o)
+    oldMaster="${OPTARG}"
+    ;;
+  s)
+    sshOptions="${OPTARG}"
+    ;;
+  n)
+    newMaster="${OPTARG}"
+    ;;
+  i)
+    interface="${OPTARG}"
+    ;;
+  I)
+    vip="${OPTARG}"
+    ;;
+  u)
+    sshUser="${OPTARG}"
+    ;;
+  g)
+    gateway="${OPTARG}"
+    ;;
+  h)
+    usage
+    exit 0
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
   esac
 done
+
+# Enable pretty logger.
+function log() {
+  echo "[$(date -u +"%Y-%m-%d %H:%M:%S UTC")] $(printf "%s" "$@")"
+}
 
 # command for adding our VIP
 cmd_vip_add="ifconfig ${interface} ${vip} up"
@@ -58,19 +65,24 @@ cmd_vip_del="ifconfig ${interface} down"
 # command for discovering if our VIP is enabled
 cmd_vip_chk="ifconfig | grep 'inet addr' | grep ${vip}"
 # command for sending gratuitous ARP to announce IP move
-cmd_arp_fix="arping -c 3 -S ${vip} ${gateway}"
+cmd_arp_fix="\$(which arping) -c 3 -I ${interface} -S ${vip} ${gateway}"
 cmd_arp_force_fix="while true; do ${cmd_arp_fix}; sleep 60; done"
-
-vipRemovedFromOldMaster=false
 
 vip_stop() {
   rc=0
 
   # ensure the VIP is removed
-  ssh ${sshOptions} -tt ${sshUser}@${oldMaster} \
-  "[ -n \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_del} && ${cmd_arp_fix} || [ -z \"\$(${cmd_vip_chk})\" ]"
+  log "[info] attempt to remove VIP. SSH command will be executed..."
+  local OUT
+  OUT=$(
+    ssh ${sshOptions} -tt "${sshUser}"@"${oldMaster}" \
+      "[ -n \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_del} && ${cmd_arp_fix} || [ -z \"\$(${cmd_vip_chk})\" ]" 2>&1
+  )
 
   rc=$?
+  log "[info] SSH command exit code: ${rc}, output:"
+  echo "${OUT}"
+
   return ${rc}
 }
 
@@ -80,50 +92,63 @@ vip_start() {
   # ensure the VIP is added
   # this command should exit with failure if we are unable to add the VIP
   # if the VIP already exists always exit 0 (whether or not we added it)
-  ssh ${sshOptions} -tt ${sshUser}@${newMaster} \
-   "[ -z \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_add} && ${cmd_arp_fix} || [ -n \"\$(${cmd_vip_chk})\" ]"
-  
+  log "[info] attempt to add VIP. SSH command will be executed..."
+  local OUT
+  OUT=$(
+    ssh ${sshOptions} -tt "${sshUser}"@"${newMaster}" \
+      "[ -z \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_add} && ${cmd_arp_fix} || [ -n \"\$(${cmd_vip_chk})\" ]" 2>&1
+  )
+
   rc=$?
+  log "[info] SSH command exit code: ${rc}, output:"
+  echo "${OUT}"
+
   return ${rc}
 }
 
 vip_status() {
-  arping -c 2 ${vip}
-  if ping -c 2 -W 1 ${vip}; then
-      return 0
+  if ping -c 2 -W 1 "${vip}"; then
+    return 0
   else
-      return 1
+    return 1
   fi
 }
 
 # If we do not remove VIP from old master (e.g. some SSH problems),
 # run infinite arping.
 force_arping() {
-  ssh ${sshOptions} -f ${sshUser}@${newMaster} "screen -dmS orch_force_arping_STOP_ME bash -c '${cmd_arp_force_fix}'"
+  log "[info] attempt to exec infinite arping. SSH command will be executed..."
+  local OUT
+  OUT=$(
+    ssh ${sshOptions} -f "${sshUser}"@"${newMaster}" "screen -dmS orch_force_arping_STOP_ME bash -c '${cmd_arp_force_fix}'" 2>&1
+  )
+
+  rc=$?
+  log "[info] SSH command exit code: ${rc}, output:"
+  echo "${OUT}"
 }
 
-echo "[info] Master is dead, trying to move VIP from old master to a new one"
+log "[info] master is dead, trying to move VIP ${vip} from old master (${oldMaster}) to a new one (${newMaster})"
 
-echo '[info] Make sure the VIP is not available...'
-if vip_status; then 
-    echo '[info] VIP is pingable so try to down it.'
-    if vip_stop; then
-        vipRemovedFromOldMaster=true
-        echo "[info] ${vip} is removed from ${oldMaster}."
-    else
-        # We do not treat it as a fatal error.
-        echo "[info] Couldn't remove ${vip} from ${oldMaster}."
-    fi
+vipRemovedFromOldMaster=false
+
+log '[info] make sure the VIP is not available attempting to down the network interface on old master'
+if vip_stop; then
+  vipRemovedFromOldMaster=true
+  log "[info] VIP ${vip} is removed from old master ${oldMaster}"
+else
+  # We do not treat it as a fatal error.
+  log "[info] failed to remove VIP ${vip} from old master ${oldMaster}"
 fi
 
-echo '[info] Moving VIP to new master.'
+log '[info] moving VIP to new master'
 if vip_start; then
-      echo "[info] ${vip} is moved to ${newMaster}."
-      if [ "${vipRemovedFromOldMaster}" = false ]; then
-        echo "[warn] arping is going to run in the background process!"
-        force_arping
-      fi
+  log "[info] VIP ${vip} is moved to new master ${newMaster}"
+  if [ "${vipRemovedFromOldMaster}" = false ]; then
+    log "[warn] arping is going to run in the background process!"
+    force_arping
+  fi
 else
-      echo "[info] Can't add ${vip} on ${newMaster}!" 
-      exit 1
+  log "[error] failed to add VIP ${vip} on new master ${newMaster}!"
+  exit 1
 fi

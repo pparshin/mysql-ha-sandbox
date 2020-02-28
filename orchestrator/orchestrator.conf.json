@@ -94,11 +94,11 @@
     "echo 'Detected {failureType} on {failureCluster}. Affected replicas: {countSlaves}' >> /tmp/recovery.log"
   ],
   "PreFailoverProcesses": [
-    "/usr/local/bin/orch_failure_detection.sh {failedHost} >> /tmp/orch.log",
+    "/usr/local/scripts/orch_failure_detection.sh {failedHost} >> /var/log/orchestrator_vip_failover.log",
     "echo 'Will recover from {failureType} on {failureCluster}' >> /tmp/recovery.log"
   ],
   "PostFailoverProcesses": [
-    "/usr/local/bin/orch_hook.sh {failureType} {failureClusterAlias} {failedHost} {successorHost}",
+    "/usr/local/scripts/orch_hook.sh {failureType} {failureClusterAlias} {failedHost} {successorHost} >> /var/log/orchestrator_vip_failover.log",
     "echo '(for all types) Recovered from {failureType} on {failureCluster}. Failed: {failedHost}:{failedPort}; Successor: {successorHost}:{successorPort}' >> /tmp/recovery.log"
   ],
   "PostUnsuccessfulFailoverProcesses": [],

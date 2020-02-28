@@ -8,11 +8,11 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
   tzdata \
   netcat \
   net-tools \
-  iputils-arping \
   iputils-ping \
   openssh-server \
   iptables \
-  screen
+  screen \
+  arping
 
 RUN mkdir /var/run/sshd
 RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh

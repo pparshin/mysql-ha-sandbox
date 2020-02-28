@@ -2,14 +2,21 @@
 
 set -e
 
+# Enable pretty logger.
+function log() {
+  echo "[$(date -u +"%Y-%m-%d %H:%M:%S UTC")] $(printf "%s" "$@")"
+}
+
+log "[info] ensure that master is not pingable by ICMP and TCP"
+
 # This argument is passed from orchestrator.
 master=${1}
-# Ping timeout, seconds 
+# Ping timeout, seconds
 timeout=10
 
 is_icmp_pingable() {
-  echo "[info] trying ICMP ping"
-  if ping -w ${timeout} ${master}; then
+  log "[info] trying ICMP ping..."
+  if ping -w ${timeout} "${master}"; then
     return 1
   else
     return 0
@@ -17,8 +24,8 @@ is_icmp_pingable() {
 }
 
 is_tcp_pingable() {
-  echo "[info] trying TCP ping"
-  if nc -w ${timeout} -z ${master} 3306; then
+  log "[info] trying TCP ping..."
+  if nc -w ${timeout} -z "${master}" 3306; then
     return 1
   else
     return 0
@@ -36,13 +43,13 @@ wait ${by_tcp_pid} || by_tcp=$?
 by_icmp=0
 wait ${by_icmp_pid} || by_icmp=$?
 
-echo "[info] TCP ping result: ${by_tcp}"
-echo "[info] ICMP ping result: ${by_icmp}"
+log "[info] TCP ping result: ${by_tcp}"
+log "[info] ICMP ping result: ${by_icmp}"
 
 if [ "${by_tcp}" = 1 ] && [ "${by_icmp}" = 1 ]; then
-  echo "[warn] Master is pingable (ICMP and TCP) so it is alive - false trigger?"
+  log "[warn] master is pingable (ICMP and TCP) so it is alive - false trigger?"
   exit 1 # Stop recovery process
 else
-  echo "[info] Master is not pingable (ICMP and TCP) so continue the recovery process..."
+  log "[info] master is not pingable (ICMP and TCP) so continue the recovery process..."
   exit 0
 fi
