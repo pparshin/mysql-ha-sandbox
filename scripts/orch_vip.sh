@@ -66,7 +66,7 @@ cmd_vip_del="ifconfig ${interface} down"
 cmd_vip_chk="ifconfig | grep 'inet addr' | grep ${vip}"
 # command for sending gratuitous ARP to announce IP move
 cmd_arp_fix="\$(which arping) -c 3 -I ${interface} -S ${vip} ${gateway}"
-cmd_arp_force_fix="while true; do ${cmd_arp_fix}; sleep 60; done"
+cmd_arp_force_fix="\$(which arping) -I ${interface} -S ${vip} ${gateway}" # infinite arping
 
 vip_stop() {
   rc=0
@@ -104,14 +104,6 @@ vip_start() {
   echo "${OUT}"
 
   return ${rc}
-}
-
-vip_status() {
-  if ping -c 2 -W 1 "${vip}"; then
-    return 0
-  else
-    return 1
-  fi
 }
 
 # If we do not remove VIP from old master (e.g. some SSH problems),
