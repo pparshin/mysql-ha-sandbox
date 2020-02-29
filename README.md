@@ -106,7 +106,7 @@ ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c reloca
 
 Read (really read) the orchestrator [documentation](https://github.com/github/orchestrator/blob/master/docs/configuration-failure-detection.md#mysql-configuration).
 
-Read MySQL ([documentation](https://dev.mysql.com/doc/refman/5.7/en/change-master-to.html)) carefully and pay attention to:
+Read MySQL [documentation](https://dev.mysql.com/doc/refman/5.7/en/change-master-to.html) carefully and pay attention to:
 
 > Note that a change to the value or default setting of slave_net_timeout does not automatically change the heartbeat interval, 
 > whether that has been set explicitly or is using a previously calculated default. ... 
