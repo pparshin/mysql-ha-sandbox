@@ -35,7 +35,7 @@ load_schema: ## Load default schema on MySQL
 	scripts/schema.sh
 
 .PHONY: try_sql
-try_sql: ## Execute read/write SQL statements N times 
+try_sql: ## Execute read/write SQL statements N times, e.g. "make try_sql n=1000"
 	scripts/try-sql.sh ${n}
 
 .PHONY: discover
@@ -55,7 +55,7 @@ node_delay: ## Add delay to log replication
 	docker exec -it ${n} mysql -e "STOP SLAVE; CHANGE MASTER TO MASTER_DELAY = ${s}; START SLAVE;"
 
 .PHONY: node_prefer
-node_prefer:
+node_prefer: ## Add prefer promotion rule to replica
 	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c register-candidate -i ${fqdn} --promotion-rule prefer
 
 .PHONY: orchestrator-client

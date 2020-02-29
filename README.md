@@ -1,16 +1,18 @@
-# Тестовое окружение для [MySQL Orchestrator](https://github.com/github/orchestrator)
+# [MySQL Orchestrator](https://github.com/github/orchestrator)/HAProxy/VIP sandbox
 
-Основная цель: иметь локальный тестовый стенд для проведения экспериментов по отказоустойчивости кластера MySQL.
+This sandbox is designed to safely experiment with High Availability solution based on MySQL Orchestrator, HAProxy 
+and virtual IP (VIP).
 
-Для удобства развертывания будем использовать Docker и Docker Compose.
-Как результат ожидаю получить следующую конфигурацию стенда:
+The sandbox uses Docker and Docker Compose to up and down MySQL cluster and all its dependencies.
 
-  1. Кластер MySQL (1 мастер, N реплик). Версия MySQL - 5.7
-  2. Один экземпляр MySQL Orchestrator, который будет отвечать за мониторинг кластера и выполнять автоматическое переключение мастера на одну из реплик, если основной мастер выходит из строя.
-  3. Экземпляр HAProxy, через который клиент будет выполнять свои запросы.
-  4. Простой клиент (Bash скрипт или Go приложение) для имитации нагрузки на БД.
+The sandbox has next configuration:
 
-В каждую ноду кластера добавлен SSH ключ для подключения из машины с оркестратором.
+  1. MySQL cluster (1 master, N replicas). MySQL version - 5.7.
+  2. MySQL orchestrator cluster using raft consensus (3 nodes). 
+  3. HAProxy instance which used to spread SQL read queries across replicas.
+  4. Simple Bash script to emulate read/write queries.
+
+To down and up network interfaces SSH key is added to every MySQL nodes.  
 
 ## MySQL Orchestrator
 
@@ -24,108 +26,66 @@ cd orchestrator/source
 docker build -t orchestrator:latest .
 ```
 
-### Исследовать топологию кластера
+## VIP (virtual IP)
 
-Можно выполнить через [UI](http://localhost:80) или командную строку:
+- 172.20.0.200 - master
+- 172.20.0.2xx - replica xx (1..20)
+
+## HAProxy
+
+Administrative section is available on [http://localhost:8080](http://localhost:8080)
+
+## How to discover the cluster topology by orchestrator
+
+Use web [UI](http://localhost:80) or a command line:
 
 ```bash
 make discover
 ```
 
-Вывести текущую топологию:
+How to print the current cluster topology:
 
 ```bash
 make orchestrator-client c="-c topology -i db_test cli"
 ```
 
-## VIP (виртуальные IP)
+## Configure and run the sandbox
 
-Используем следующие IP:
-- 172.20.0.200 - мастер
-- 172.20.0.20x - реплика №x
-
-Основные команды:
-
-```bash
-# Добавить новый интерфейс и VIP
-ifconfig eth0:0 172.20.0.200 up
-arping -s 172.20.0.200 -c 3 172.20.0.1
-
-# Выключить интерфейс
-ifconfig eth0:0 down
-```
-
-## HAProxy
-
-Страница администратора доступна по адресу [http://localhost:8080](http://localhost:8080)
-
-## Алгоритм тестирования
-
-Сборка и запуск песочницы:
+Build and up all containers:
 
 ```bash
 make clean
 make up
-# Указываем количество реплик.
+# Where n is a total number of replicas, max 20.
 make scale n=10
 ```
 
-Инициализация кластера и оркестратора:
+Load SQL schema and discover the topology:
 
 ```bash
 make load_schema
 make discover
 ```
 
-Через несколько секунд оркестратор построит топологию кластера и можно блокировать мастер:
+Wait a few seconds and you can play with cluster as you would like, e.g.:
 
 ```bash
-# Эмулируем нагрузку в отдельном терминале
+# Emulate read/write queries in the backgroung or separate terminal 
 make try_sql n=200
-# Можно заблокировать мастер через iptables
+# Block the master using iptables (mimic a network partitioning)
 make node_drop n=orchestrator-sandbox_node1_1
-# Или полностью выключить ноду
+# Or completely stop the master
 docker-compose stop node1
 ```
 
-Ожидаемое поведение: после блокировки мастера HAProxy должен отдавать ошибки, оркестратор должен перестроить кластер и сделать одну из реплик мастером, новый мастер получает VIP 172.20.0.200 и HAProxy возвращает ноду для записи в нагрузку, SQL запросы начинают успешно выполняться как на запись так и на чтение.
+You should expect that orchestrator detects master downtime and start the failover process. 
+A new master will be elected and topology will be rebuilt after 20-30 seconds.
 
 ## FAQ
 
-### Как используется cluster_domain из мета информации?
+### How to get back an old master to a new cluster after failover?
 
-Используется в качестве дополнительной информации о кластере. Напрямую на работу оркестратора никак не влияет. 
-
-Может использоваться в хуках: 
-
- - Шаблон подстановки `{failureClusterDomain}`,
- - Переменная окружения `ORC_FAILURE_CLUSTER_DOMAIN` ([topology_recovery.go#L314](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L314)).
-
-### Переключение только на неотстающий слейв
-
-Согласно документации оркестратор выбирает максимально свежий и подходящий слейв в качестве кандидата в мастеры.
-
-Можно использовать опцию `DelayMasterPromotionIfSQLThreadNotUpToDate`:
-
-> if all replicas were lagging at time of failure, even the most up-to-date, promoted replica may yet have unapplied relay logs. When true, 'orchestrator' will wait for the SQL thread to catch up before promoting a new master. FailMasterPromotionIfSQLThreadNotUpToDate and DelayMasterPromotionIfSQLThreadNotUpToDate are mutually exclusive.
-
-### Указать оркестратору какие реплики приоритетны для использования в качестве мастера, а какие нет
-
-Смотри [документацию](https://github.com/github/orchestrator/blob/master/docs/topology-recovery.md#adding-promotion-rules)
-
-Необходимо использовать Bash скрипт в cron для периодического обновления этих рекомендаций, поскольку их TTL равен 1 часу.
-
-### Долго выполняется шаг Regrouping replicas via GTID
-
-Смотри [issue](https://github.com/github/orchestrator/issues/648)
-
-### Как вернуть старый мастер в новый кластер?
-
-Рекомендуется в конфигурации MySQL `my.cnf` указать значение `read_only=1`. В случае перезагрузки ноды старый мастер будет автоматически подниматься в режиме ReadOnly.  
-
-В процессе восстановления оркестратор автоматически устанавливает параметр `read_only` в 0 для нового мастера ([topology_recovery.go#L888](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L888)), далее происходит попытка установить `read_only` в 1 на старом мастере в отдельной горутине ([topology_recovery.go#L893](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L893)).
-
-На старом мастере:
+Run next commands on old master:
 
 ```sql
 SET @@GLOBAL.READ_ONLY=1;
@@ -135,48 +95,59 @@ CHANGE MASTER TO MASTER_CONNECT_RETRY=1, MASTER_RETRY_COUNT=86400, MASTER_HEARTB
 START SLAVE;
 ```
 
-Обновить оркестратор:
+Update the orchestrator:
 
 ```bash
-# -i - это старый мастер, -d - куда переносим (новый мастер)
-docker-compose exec orchestrator ./orchestrator -c relocate -i 172.20.0.11 -d 172.20.0.12
+# -i - old master, -d - new master
+ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c relocate -i 172.20.0.11 -d 172.20.0.12
 ```
 
-### Время обнаружения проблемы и восстановления кластера
+### Which options might affect on time to detect a problem and recover a master?
 
-Какие [параметры MySQL](https://github.com/github/orchestrator/blob/master/docs/configuration-failure-detection.md#mysql-configuration) влияют на эти процессы:
+Read (really read) the orchestrator [documentation](https://github.com/github/orchestrator/blob/master/docs/configuration-failure-detection.md#mysql-configuration).
 
- - `slave_net_timeout` - этот параметр определяет heartbeat интервал между репликой и мастером. Чем меньше значение, тем быстрее реплика сможет определить, что топология нарушена. Рекомендуемое значение - 4 секунды, heartbeat сигнал по умолчанию отправляется каждые `slave_net_timeout / 2` секунд.  
- - `CHANGE MASTER TO MASTER_CONNECT_RETRY=1, MASTER_RETRY_COUNT=86400, MASTER_HEARTBEAT_PERIOD=2`. В случае потери репликации параметр `MASTER_CONNECT_RETRY` определяет время в секундах, через которое реплика выполнит переподключение к мастеру (по умолчанию, 60 секунд). В случае сетевых проблем низкое значение этого параметра позволит быстро выполнить переподключение и предотвратить запуск процесса восстановления топологии.
+Read MySQL ([documentation](https://dev.mysql.com/doc/refman/5.7/en/change-master-to.html)) carefully and pay attention to:
 
-Также нужно помнить, что ([документация](https://dev.mysql.com/doc/refman/5.7/en/change-master-to.html)):
+> Note that a change to the value or default setting of slave_net_timeout does not automatically change the heartbeat interval, 
+> whether that has been set explicitly or is using a previously calculated default. ... 
+> If slave_net_timeout is changed, you must also issue CHANGE MASTER TO to adjust the heartbeat interval 
+> to an appropriate value so that the heartbeat signal occurs before the connection timeout.
 
-> Note that a change to the value or default setting of slave_net_timeout does not automatically change the heartbeat interval, whether that has been set explicitly or is using a previously calculated default. ... If slave_net_timeout is changed, you must also issue CHANGE MASTER TO to adjust the heartbeat interval to an appropriate value so that the heartbeat signal occurs before the connection timeout.
-
-Как проверить текущее значение `MASTER_HEARTBEAT_PERIOD`:
+How to get current value of `MASTER_HEARTBEAT_PERIOD`:
 
 ```mysql
-mysql_slave > SELECT HEARTBEAT_INTERVAL FROM performance_schema.replication_connection_configuration;
+SELECT HEARTBEAT_INTERVAL FROM performance_schema.replication_connection_configuration;
 ```
 
-Обновить `slave_net_timeout`:
+How to update `slave_net_timeout`:
 
 ```mysql
-mysql_slave > STOP SLAVE; 
-mysql_slave > SET @@GLOBAL.SLAVE_NET_TIMEOUT=4; 
-mysql_slave > START SLAVE;
+STOP SLAVE; 
+SET @@GLOBAL.SLAVE_NET_TIMEOUT=4; 
+START SLAVE;
 ```
 
-Проверить текущий статус соединения между репликой и мастером:
+How to check the current connection status between replica and master:
 
 ```mysql
-mysql_slave > SELECT * FROM performance_schema.replication_connection_status\G"
+SELECT * FROM performance_schema.replication_connection_status\G;"
 ```
 
-Параметры оркестратора:
+Play with next orchestrator options:
 
- - `DelayMasterPromotionIfSQLThreadNotUpToDate`. Если равен `true`, то роль мастера не будет применена на реплике-кандидате до тех пор, пока SQL поток реплики не выполнит все непримененные транзакции из Relay Log.
- - `InstancePollSeconds`. Как часто выполняется построение/обновление топологии.
- - `RecoveryPollSeconds`. Как часто выполняется анализ топологии и в случае обнаружения проблемы запускается процедура восстановления топологии. Это [константа](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/config/config.go#L45), равная 1 секунде.
+ - `DelayMasterPromotionIfSQLThreadNotUpToDate`,
+ - `InstancePollSeconds`,
+ - `RecoveryPollSeconds`. Basically, it is a hardcoded [constant]((https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/config/config.go#L45)) which defines how often to run topology analyze.
 
-Каждый узел кластера опрашивается оркестратором один раз в `InstancePollSeconds` секунд. В случае обнаружения проблемы выполняется принудительное [обновление](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L1409) состояния кластера и на основе этого принимается окончательное решение о выполнении процедуры восстановления.
+Each node of cluster is probed once every `InstancePollSeconds` seconds. 
+If a problem is detected, orchestrator forcefully [updates](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L1409) 
+cluster topology and decides to execute recovery or not.
+
+### What the meaning of cluster_domain from meta table?
+
+Has no direct influence on orchestrator and how it performs the recovery. 
+
+It might be useful in hooks to implement your own logic: 
+
+ - as a placeholder `{failureClusterDomain}`,
+ - as a environment variable `ORC_FAILURE_CLUSTER_DOMAIN` ([topology_recovery.go#L314](https://github.com/github/orchestrator/blob/548265494b3107ca2581d6ccee059e062a759b77/go/logic/topology_recovery.go#L314)).
