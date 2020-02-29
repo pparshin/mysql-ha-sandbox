@@ -2,7 +2,7 @@
 
 export MYSQL_PWD=admin
 
-function run {
+function run() {
   echo 'Going to master'
   mysql -h 127.0.0.1 -P 3306 -uadmin --protocol tcp -e "SHOW VARIABLES LIKE 'SERVER_ID'"
 
@@ -20,10 +20,9 @@ function run {
 
 cycles=${1:-1}
 
-for (( i=1; i <= cycles; i++ ));
-do
+for ((i = 1; i <= cycles; i++)); do
   if [ ${i} -gt 1 ]; then
-  	sleep 1
+    sleep 1
   fi
 
   run

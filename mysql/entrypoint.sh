@@ -18,7 +18,6 @@ mkdir -p "$DATADIR"
 mkdir -p "$SOCKETDIR"
 chown -R mysql:mysql "$DATADIR"
 chown -R mysql:root "$SOCKETDIR"
-> /var/log/mysql/error.log
 
 echo '[Entrypoint] Initializing database.'
 mysqld --initialize-insecure \
