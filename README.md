@@ -33,7 +33,7 @@ docker build -t orchestrator:latest .
 
 ## HAProxy
 
-Administrative section is available on [http://localhost:8080](http://localhost:8080)
+Administrative section is available on [http://localhost:8080/stats](http://localhost:8080/stats)
 
 ## How to discover the cluster topology by orchestrator
 
