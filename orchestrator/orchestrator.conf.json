@@ -33,9 +33,9 @@
   "AuditToSyslog": false,
   "RemoveTextFromHostnameDisplay": ":3306",
   "ReadOnly": false,
-  "AuthenticationMethod": "",
-  "HTTPAuthUser": "",
-  "HTTPAuthPassword": "",
+  "AuthenticationMethod": "multi",
+  "HTTPAuthUser": "dba_team",
+  "HTTPAuthPassword": "time_for_dinner",
   "AuthUserHeader": "",
   "PowerAuthUsers": [
     "*"

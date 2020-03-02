@@ -40,7 +40,7 @@ try_sql: ## Execute read/write SQL statements N times, e.g. "make try_sql n=1000
 
 .PHONY: discover
 discover: ## Run MySQL orchestrator cluster topology discovering process
-	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c discover -i 172.20.0.200:3306
+	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -b "dba_team:time_for_dinner" -c discover -i 172.20.0.200:3306
 
 .PHONY: node_drop
 node_drop: ## Add DROP rule in iptables in order to block MySQL instance
@@ -56,8 +56,8 @@ node_delay: ## Add delay to log replication
 
 .PHONY: node_prefer
 node_prefer: ## Add prefer promotion rule to replica
-	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c register-candidate -i ${fqdn} --promotion-rule prefer
+	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -b "dba_team:time_for_dinner" -c register-candidate -i ${fqdn} --promotion-rule prefer
 
 .PHONY: orchestrator-client
 orchestrator-client: ## Run orchestrator-client command
-	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client ${c}
+	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -b "dba_team:time_for_dinner" ${c}

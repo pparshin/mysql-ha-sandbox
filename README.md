@@ -14,6 +14,11 @@ The sandbox has next configuration:
 
 To down and up network interfaces SSH key is added to every MySQL nodes.  
 
+Access to orchestrator is restricted via [multi](https://github.com/openark/orchestrator/blob/master/docs/security.md) mode:
+
+- user with read/write privileges: `dba_team:time_for_dinner`,
+- user with only read privileges: `readonly:any`
+
 ## MySQL Orchestrator
 
 ```bash
@@ -99,7 +104,7 @@ Update the orchestrator:
 
 ```bash
 # -i - old master, -d - new master
-ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -c relocate -i 172.20.0.11 -d 172.20.0.12
+ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -b "dba_team:time_for_dinner" -c relocate -i 172.20.0.11 -d 172.20.0.12
 ```
 
 ### Which options might affect on time to detect a problem and recover a master?
