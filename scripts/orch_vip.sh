@@ -58,6 +58,18 @@ function log() {
   echo "[$(date -u +"%Y-%m-%d %H:%M:%S UTC")] $(printf "%s" "$@")"
 }
 
+function send_message() {
+  log "[debug] Sending message to orchestrator via HTTP API"
+  local OUT
+  OUT=$(
+    curl -ik --connect-timeout 2 -H "Authorization: Basic ZGJhX3RlYW06dGltZV9mb3JfZGlubmVy" -G "${ORC_ORCHESTRATOR_HOST}:3000/api/add-cluster-message/${ORC_FAILURE_CLUSTER_ALIAS}" --data-urlencode "level=${1}" --data-urlencode "text=${2}" 2>&1
+  )
+
+  rc=$?
+  log "[info] Curl command exit code: ${rc}, output:"
+  echo "${OUT}"
+}
+
 # command for adding our VIP
 cmd_vip_add="ifconfig ${interface} ${vip} up"
 # command for deleting our VIP
@@ -118,6 +130,8 @@ force_arping() {
   rc=$?
   log "[info] SSH command exit code: ${rc}, output:"
   echo "${OUT}"
+
+  return ${rc}
 }
 
 log "[info] master is dead, trying to move VIP ${vip} from old master (${oldMaster}) to a new one (${newMaster})"
@@ -127,20 +141,28 @@ vipRemovedFromOldMaster=false
 log '[info] make sure the VIP is not available attempting to down the network interface on old master'
 if vip_stop; then
   vipRemovedFromOldMaster=true
+  send_message "success" "VIP ${vip} is removed from old master ${oldMaster}"
   log "[info] VIP ${vip} is removed from old master ${oldMaster}"
 else
   # We do not treat it as a fatal error.
+  send_message "danger" "Failed to remove VIP ${vip} from old master ${oldMaster}! It might lead to split brain. Resolve this issue ASAP!"
   log "[info] failed to remove VIP ${vip} from old master ${oldMaster}"
 fi
 
 log '[info] moving VIP to new master'
 if vip_start; then
+  send_message "success" "VIP ${vip} is moved to new master ${newMaster}"
   log "[info] VIP ${vip} is moved to new master ${newMaster}"
   if [ "${vipRemovedFromOldMaster}" = false ]; then
     log "[warn] arping is going to run in the background process!"
-    force_arping
+    if force_arping; then
+      send_message "warning" "Infinite arping is running on node ${newMaster} to avoid split brain! Fix network configuration on old master and stop background screen process."
+    else
+      send_message "danger" "Failed to run infinite arping on node ${newMaster}! It might lead to split brain. Resolve this issue ASAP!"
+    fi
   fi
 else
+  send_message "danger" "Failed to add VIP ${vip} on new master ${newMaster}! Resolve this issue ASAP!"
   log "[error] failed to add VIP ${vip} on new master ${newMaster}!"
   exit 1
 fi
