@@ -42,6 +42,10 @@ try_sql: ## Execute read/write SQL statements N times, e.g. "make try_sql n=1000
 discover: ## Run MySQL orchestrator cluster topology discovering process
 	ORCHESTRATOR_API="http://127.0.0.1:80/api" scripts/orchestrator-client -b "dba_team:time_for_dinner" -c discover -i 172.20.0.200:3306
 
+.PHONY: orchestrator_isolate
+orchestrator_isolate:
+	docker exec -it ${n} iptables -A INPUT -p tcp --dport 3306 -s 172.20.0.170/28 -j DROP
+
 .PHONY: node_drop
 node_drop: ## Add DROP rule in iptables in order to block MySQL instance
 	docker exec -it ${n} iptables -A INPUT -p tcp --dport 3306 -j DROP
