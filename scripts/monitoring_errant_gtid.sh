@@ -13,6 +13,9 @@ credentials="dba_team:time_for_dinner"
 export ORCHESTRATOR_API="http://127.0.0.1:80/api"
 
 command=${1}
+# if 1 than instance will be checked only if this script is executed on the orchestrator leader machine.
+raft_exec_only_on_leader=1
+raft_node_hostname=$(hostname)
 
 api_response=
 
@@ -69,11 +72,30 @@ function discover() {
   done
 }
 
+function can_check_instance() {
+  if [ ${raft_exec_only_on_leader} == 0 ]; then
+    return 0
+  fi
+
+  client_call "raft-leader-hostname"
+  raft_leader="${api_response}"
+
+  if [ "${raft_leader}" == "${raft_node_hostname}" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
 function check_instance() {
   replica=${1}
 
-  client_call "which-gtid-errant -i ${replica}"
-  replica_errant_gtid="${api_response}"
+  replica_errant_gtid=""
+  if can_check_instance; then
+    # Do request only on raft leader
+    client_call "which-gtid-errant -i ${replica}"
+    replica_errant_gtid="${api_response}"
+  fi
 
   json=$(
     jq -n \
