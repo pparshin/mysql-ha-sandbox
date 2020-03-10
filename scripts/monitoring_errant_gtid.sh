@@ -12,6 +12,8 @@ credentials="dba_team:time_for_dinner"
 
 export ORCHESTRATOR_API="http://127.0.0.1:80/api"
 
+command=${1}
+
 api_response=
 
 clusters=
@@ -50,23 +52,44 @@ function fetch_cluster_replicas() {
   mapfile -t cluster_replicas < <(echo "${api_response}" | awk -F: '{print $1}')
 }
 
-fetch_clusters
-for cluster in "${clusters[@]}"; do
-  fetch_cluster_replicas "${cluster}"
+function discover() {
+  fetch_clusters
+  for cluster in "${clusters[@]}"; do
+    fetch_cluster_replicas "${cluster}"
 
-  for replica in "${cluster_replicas[@]}"; do
-    client_call "which-gtid-errant -i ${replica}"
-    replica_errant_gtid="${api_response}"
-
-    replica_data=$(
-      jq -n \
-        --arg ca "${cluster}" \
-        --arg fqdn "${replica}" \
-        --arg errant "${replica_errant_gtid}" \
-        '{"{#ORCH_CLUSTER_ALIAS}": $ca, "{#ORCH_REPLICA_FQDN}": $fqdn, "{#ORCH_REPLICA_ERRANT_GTID}": $errant}'
-    )
-    json=$(jq ".data += [${replica_data}]" <<<"${json}")
+    for replica in "${cluster_replicas[@]}"; do
+      replica_data=$(
+        jq -n \
+          --arg ca "${cluster}" \
+          --arg fqdn "${replica}" \
+          '{"{#ORCH_CLUSTER_ALIAS}": $ca, "{#ORCH_REPLICA_FQDN}": $fqdn}'
+      )
+      json=$(jq ".data += [${replica_data}]" <<<"${json}")
+    done
   done
-done
+}
+
+function check_instance() {
+  replica=${1}
+
+  client_call "which-gtid-errant -i ${replica}"
+  replica_errant_gtid="${api_response}"
+
+  json=$(
+    jq -n \
+      --arg fqdn "${replica}" \
+      --arg errant "${replica_errant_gtid}" \
+      '{"fqdn": $fqdn, "errant_gtid": $errant}'
+  )
+}
+
+if [ "${command}" == "discover" ]; then
+  discover
+elif [[ -n "${command}" ]]; then
+  check_instance "${command}"
+else
+  echo "[fatal] no command given. Discover clusters or check an instance whether it has errant GTID"
+  exit 1
+fi
 
 echo "${json}"
