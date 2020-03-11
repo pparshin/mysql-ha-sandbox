@@ -4,14 +4,13 @@
 
 function usage() {
   cat <<EOF
- usage: $0 [-h] [-o old master ] [-s ssh options] [-n new master] [-i interface] [-I] [-g gateway] [-u SSH user]
+ usage: $0 [-h] [-o old master ] [-s ssh options] [-n new master] [-I] [-g gateway] [-u SSH user]
  
  OPTIONS:
     -h        Show this message
     -o string Old master hostname or IP address 
     -s string SSH options
     -n string New master hostname or IP address
-    -i string Interface, e.g. eth0:0
     -I string Virtual IP
     -g string Subnet gateway 
     -u string SSH user
@@ -29,9 +28,6 @@ while getopts ho:s:n:i:I:g:u: flag; do
     ;;
   n)
     newMaster="${OPTARG}"
-    ;;
-  i)
-    interface="${OPTARG}"
     ;;
   I)
     vip="${OPTARG}"
@@ -70,15 +66,17 @@ function send_message() {
   echo "${OUT}"
 }
 
+# command for getting name of default interface
+cmd_default_nic="ip -4 route | awk '/default/ { print \$5 }'"
 # command for adding our VIP
-cmd_vip_add="ifconfig ${interface} ${vip} up"
+cmd_vip_add="ip address add ${vip}/32 dev \${ORCH_FAILOVER_NIC}"
 # command for deleting our VIP
-cmd_vip_del="ifconfig ${interface} down"
+cmd_vip_del="ip address del ${vip}/32 dev \${ORCH_FAILOVER_NIC}"
 # command for discovering if our VIP is enabled
-cmd_vip_chk="ifconfig | grep 'inet addr' | grep ${vip}"
+cmd_vip_chk="ip address show dev \${ORCH_FAILOVER_NIC} to ${vip}/32"
 # command for sending gratuitous ARP to announce IP move
-cmd_arp_fix="\$(which arping) -c 3 -I ${interface} -S ${vip} ${gateway}"
-cmd_arp_force_fix="\$(which arping) -I ${interface} -S ${vip} ${gateway}" # infinite arping
+cmd_arp_fix="\$(which arping) -c 3 -I \${ORCH_FAILOVER_NIC} -S ${vip} ${gateway}"
+cmd_arp_force_fix="\$(which arping) -I \${ORCH_FAILOVER_NIC} -S ${vip} ${gateway}" # infinite arping
 
 vip_stop() {
   rc=0
@@ -87,8 +85,10 @@ vip_stop() {
   log "[info] attempt to remove VIP. SSH command will be executed..."
   local OUT
   OUT=$(
-    ssh ${sshOptions} -tt "${sshUser}"@"${oldMaster}" \
-      "[ -n \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_del} && ${cmd_arp_fix} || [ -z \"\$(${cmd_vip_chk})\" ]" 2>&1
+    ssh ${sshOptions} -tt "${sshUser}"@"${oldMaster}" "
+      export ORCH_FAILOVER_NIC=$(eval "${cmd_default_nic}")
+      [ -n \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_del} && ${cmd_arp_fix} || [ -z \"\$(${cmd_vip_chk})\" ]
+    " 2>&1
   )
 
   rc=$?
@@ -107,8 +107,10 @@ vip_start() {
   log "[info] attempt to add VIP. SSH command will be executed..."
   local OUT
   OUT=$(
-    ssh ${sshOptions} -tt "${sshUser}"@"${newMaster}" \
-      "[ -z \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_add} && ${cmd_arp_fix} || [ -n \"\$(${cmd_vip_chk})\" ]" 2>&1
+    ssh ${sshOptions} -tt "${sshUser}"@"${newMaster}" "
+      export ORCH_FAILOVER_NIC=$(eval "${cmd_default_nic}")
+      [ -z \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_add} && ${cmd_arp_fix} || [ -n \"\$(${cmd_vip_chk})\" ]
+    " 2>&1
   )
 
   rc=$?
@@ -124,7 +126,10 @@ force_arping() {
   log "[info] attempt to exec infinite arping. SSH command will be executed..."
   local OUT
   OUT=$(
-    ssh ${sshOptions} -f "${sshUser}"@"${newMaster}" "screen -dmS orch_force_arping_STOP_ME bash -c '${cmd_arp_force_fix}'" 2>&1
+    ssh ${sshOptions} -f "${sshUser}"@"${newMaster}" "
+      export ORCH_FAILOVER_NIC=$(eval "${cmd_default_nic}")
+      screen -dmS orch_force_arping_STOP_ME bash -c '${cmd_arp_force_fix}'
+    " 2>&1
   )
 
   rc=$?

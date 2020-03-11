@@ -104,8 +104,8 @@ echo '[Entrypoint] MySQL init process done. Ready for start up.'
 
 if [[ -n "${VIP}" ]]; then
   echo "[Entrypoint] Assign VIP: ${VIP}"
-  ifconfig eth0:0 "${VIP}"
-  arping -c 3 -S "${VIP}" -I eth0:0 "${GATEWAY}"
+  ip address add "${VIP}"/32 dev eth0
+  arping -c 3 -S "${VIP}" -I eth0 "${GATEWAY}"
 fi
 
 echo '[Entrypoint] Starting sshd up...'
