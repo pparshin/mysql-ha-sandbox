@@ -18,7 +18,7 @@ EOF
 
 }
 
-while getopts ho:s:n:i:I:g:u: flag; do
+while getopts ho:s:n:I:g:u: flag; do
   case $flag in
   o)
     oldMaster="${OPTARG}"
