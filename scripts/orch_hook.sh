@@ -25,7 +25,7 @@ oldMaster=${3}
 newMaster=${4}
 
 # SSH options used to connect to servers when moving VIP.
-sshOptions="-i /root/.ssh/orchestrator_rsa -o ConnectTimeout=5"
+sshOptions="-i /root/.ssh/orchestrator_rsa -o ConnectTimeout=5 -o StrictHostKeyChecking=no"
 
 # Where "db_test" is the name of the cluster,
 # "172.20.0.200" is the VIP on this cluster,
