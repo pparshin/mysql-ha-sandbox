@@ -7,6 +7,14 @@ function log() {
   echo "[$(date -u +"%Y-%m-%d %H:%M:%S UTC")] $(printf "%s" "$@")"
 }
 
+printf "\n# New Recovery\n"
+
+user_commands=("force-master-failover" "force-master-takeover" "graceful-master-takeover")
+if [[ " ${user_commands[@]} " =~ " ${ORC_COMMAND} " ]]; then
+  log "[info] it is a manual failover (${ORC_COMMAND}) so skip the prefailover process"
+  exit 0
+fi
+
 log "[info] ensure that master is not pingable by ICMP and TCP"
 
 # This argument is passed from orchestrator.

@@ -58,7 +58,7 @@ function send_message() {
   log "[debug] Sending message to orchestrator via HTTP API"
   local OUT
   OUT=$(
-    curl -ik --connect-timeout 2 -G "dba_team:time_for_dinner@${ORC_ORCHESTRATOR_HOST}:3000/api/add-cluster-message/${ORC_FAILURE_CLUSTER_ALIAS}" --data-urlencode "level=${1}" --data-urlencode "text=${2}" 2>&1
+    curl -iks --connect-timeout 2 -G "dba_team:time_for_dinner@${ORC_ORCHESTRATOR_HOST}:3000/api/add-cluster-message/${ORC_FAILURE_CLUSTER_ALIAS}" --data-urlencode "level=${1}" --data-urlencode "text=${2}" 2>&1
   )
 
   rc=$?
