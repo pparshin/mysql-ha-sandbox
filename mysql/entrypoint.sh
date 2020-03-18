@@ -20,8 +20,7 @@ chown -R mysql:mysql "$DATADIR"
 chown -R mysql:root "$SOCKETDIR"
 
 echo '[Entrypoint] Initializing database.'
-mysqld --initialize-insecure \
-       --datadir="$DATADIR"
+mysqld --initialize-insecure --datadir="$DATADIR"
 echo '[Entrypoint] Database initialized.'
 
 mysqld --daemonize --skip-networking --socket="$SOCKET"
@@ -44,7 +43,7 @@ echo "[Entrypoint] Populate TimeZone..."
 
 echo "[Entrypoint] Create users and config replication."
 
-if [ ! -z "${IS_MASTER}" ]; then
+if [ -n "${IS_MASTER}" ]; then
   "${CMD[@]}" <<-EOSQL
   SET @@SESSION.SQL_LOG_BIN=0;
   
@@ -60,8 +59,7 @@ if [ ! -z "${IS_MASTER}" ]; then
 
   GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'%' IDENTIFIED BY 'orchpass';
   GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'%';
-  GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'localhost' IDENTIFIED BY 'orchpass';
-  GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'localhost';
+  GRANT SELECT ON mysql.slave_master_info TO 'orchestrator'@'%';
   GRANT ALL PRIVILEGES ON meta.* TO 'orchestrator'@'%';
 
   FLUSH PRIVILEGES;
@@ -83,8 +81,7 @@ else
 
   GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'%' IDENTIFIED BY 'orchpass';
   GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'%';
-  GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'localhost' IDENTIFIED BY 'orchpass';
-  GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'localhost';
+  GRANT SELECT ON mysql.slave_master_info TO 'orchestrator'@'%';
   GRANT ALL PRIVILEGES ON meta.* TO 'orchestrator'@'%';
 
   FLUSH PRIVILEGES;
@@ -112,4 +109,8 @@ echo '[Entrypoint] Starting sshd up...'
 /usr/sbin/sshd
 
 echo '[Entrypoint] Starting mysqld up...'
-mysqld
+if [ -n "${IS_MASTER}" ]; then
+  mysqld --read-only=0
+else
+  mysqld
+fi
