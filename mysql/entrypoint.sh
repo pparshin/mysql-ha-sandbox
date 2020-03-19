@@ -57,10 +57,10 @@ if [ -n "${IS_MASTER}" ]; then
   CREATE USER 'admin'@'%' IDENTIFIED WITH mysql_native_password BY 'admin';
   GRANT ALL ON *.* TO 'admin'@'%' IDENTIFIED BY 'admin' WITH GRANT OPTION;
 
-  GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'%' IDENTIFIED BY 'orchpass';
-  GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'%';
+  CREATE USER 'orchestrator'@'%' IDENTIFIED WITH mysql_native_password BY 'orchpass';
+  GRANT SUPER, PROCESS, REPLICATION SLAVE, REPLICATION CLIENT, RELOAD ON *.* TO 'orchestrator'@'%';
   GRANT SELECT ON mysql.slave_master_info TO 'orchestrator'@'%';
-  GRANT ALL PRIVILEGES ON meta.* TO 'orchestrator'@'%';
+  GRANT SELECT ON meta.* TO 'orchestrator'@'%';
 
   FLUSH PRIVILEGES;
 
@@ -79,10 +79,10 @@ else
   CREATE USER 'admin'@'%' IDENTIFIED WITH mysql_native_password BY 'admin';
   GRANT ALL ON *.* TO 'admin'@'%' IDENTIFIED BY 'admin' WITH GRANT OPTION;
 
-  GRANT ALL PRIVILEGES ON orchestrator.* TO 'orchestrator'@'%' IDENTIFIED BY 'orchpass';
-  GRANT SUPER, PROCESS, REPLICATION SLAVE, RELOAD ON *.* TO 'orchestrator'@'%';
+  CREATE USER 'orchestrator'@'%' IDENTIFIED WITH mysql_native_password BY 'orchpass';
+  GRANT SUPER, PROCESS, REPLICATION SLAVE, REPLICATION CLIENT, RELOAD ON *.* TO 'orchestrator'@'%';
   GRANT SELECT ON mysql.slave_master_info TO 'orchestrator'@'%';
-  GRANT ALL PRIVILEGES ON meta.* TO 'orchestrator'@'%';
+  GRANT SELECT ON meta.* TO 'orchestrator'@'%';
 
   FLUSH PRIVILEGES;
 
