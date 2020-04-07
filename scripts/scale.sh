@@ -15,7 +15,11 @@ for ((i = 1; i <= nodes; i++)); do
   fi
   docker stop ${name} || true
   docker rm ${name} || true
-  docker run --name ${name} -d --rm --network orchestrator-sandbox_orchsandbox --cap-add NET_ADMIN --cap-add NET_RAW -e GATEWAY=${gateway} -e VIP=${vip} --privileged orch_sandbox_node
+  docker run --name ${name} -d --rm --privileged --network orchestrator-sandbox_orchsandbox \
+    --cap-add NET_ADMIN --cap-add NET_RAW \
+    -e GATEWAY=${gateway} \
+    -e VIP=${vip} \
+    orch_sandbox_node
 done
 
 for ((i = 1; i <= ${nodes}; i++)); do
