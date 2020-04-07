@@ -7,6 +7,7 @@ MYSQL_SERVER_ID="${MYSQL_REPORT_HOST//./}"
 
 sed -i -e "s/#REPORT_HOST/${MYSQL_REPORT_HOST}/g" /etc/mysql/mysql.conf.d/mysqld.cnf
 sed -i -e "s/#SERVER_ID/${MYSQL_SERVER_ID}/g" /etc/mysql/mysql.conf.d/mysqld.cnf
+sed -i -e "s/#BINLOG_FORMAT/${MYSQL_BINLOG_FORMAT:-ROW}/g" /etc/mysql/mysql.conf.d/mysqld.cnf
 
 DATADIR="/var/lib/mysql"
 SOCKETDIR="/var/run/mysqld/"
