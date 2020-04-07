@@ -86,6 +86,7 @@ vip_stop() {
   local OUT
   OUT=$(
     ssh ${sshOptions} -tt "${sshUser}"@"${oldMaster}" "
+      set -x
       export ORCH_FAILOVER_NIC=\$(${cmd_default_nic})
       [ -n \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_del} && ${cmd_arp_fix} || [ -z \"\$(${cmd_vip_chk})\" ]
     " 2>&1
@@ -108,6 +109,7 @@ vip_start() {
   local OUT
   OUT=$(
     ssh ${sshOptions} -tt "${sshUser}"@"${newMaster}" "
+      set -x
       export ORCH_FAILOVER_NIC=\$(${cmd_default_nic})
       [ -z \"\$(${cmd_vip_chk})\" ] && ${cmd_vip_add} && ${cmd_arp_fix} || [ -n \"\$(${cmd_vip_chk})\" ]
     " 2>&1
@@ -127,6 +129,7 @@ force_arping() {
   local OUT
   OUT=$(
     ssh ${sshOptions} -f "${sshUser}"@"${newMaster}" "
+      set -x
       export ORCH_FAILOVER_NIC=\$(${cmd_default_nic})
       screen -dmS orch_force_arping_STOP_ME bash -c '${cmd_arp_force_fix}'
     " 2>&1
