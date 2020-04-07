@@ -12,3 +12,6 @@ done
 
 # add an intermediate master
 docker exec -it replica6 mysql -e "STOP SLAVE; CHANGE MASTER TO MASTER_HOST='replica5', MASTER_PORT=3306, MASTER_USER='repl', MASTER_PASSWORD='repl', MASTER_AUTO_POSITION=1; START SLAVE;"
+
+# add permanent replication lag
+docker exec -it replica9 mysql -e "STOP SLAVE; CHANGE MASTER TO MASTER_DELAY = 3600; START SLAVE;"
