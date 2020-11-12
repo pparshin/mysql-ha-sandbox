@@ -21,16 +21,16 @@ Access to orchestrator is restricted via [multi](https://github.com/openark/orch
 
 ## MySQL Orchestrator
 
-I recommend to clone hacked orchestrator from my own repository while the [PR#1088](https://github.com/openark/orchestrator/pull/1088) on review. 
+I recommend to clone hacked orchestrator from my own repository: 
 
 ```bash
 # Clone Git repository
 cd <work-dir>
-git clone https://github.com/ParshinPavel/orchestrator.git orchestrator/source
+git clone https://github.com/pparshin/orchestrator.git orchestrator/source
 
 # Build Docker image
 cd orchestrator/source
-docker build -t orchestrator:latest .
+docker build . -f docker/Dockerfile -t orchestrator:latest
 ```
 
 ## VIP (virtual IP)

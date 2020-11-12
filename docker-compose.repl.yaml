@@ -1,0 +1,30 @@
+version: '3.4'
+
+services:
+  tarantool:
+    build:
+      context: ./replicator/tarantool
+      args:
+        VERSION: ${TARANTOOL_VERSION:-2.6.1}
+    networks:
+      - orchsandbox
+    ports:
+      - '13301:3301'
+
+  replicator:
+    image: pparshin/go-mysql-tarantool
+    volumes:
+      - ./replicator/config.yml:/etc/mysql-tarantool/conf.yml:ro
+    networks:
+      - orchsandbox
+    depends_on:
+      - tarantool
+    hostname: tarantool-replication.srv.ru
+
+networks:
+  orchsandbox:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

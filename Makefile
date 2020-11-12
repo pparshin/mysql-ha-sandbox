@@ -4,7 +4,7 @@ help: ## This help
 
 .PHONY: build
 build: ## Build the containers
-	docker build -t orchestrator:latest orchestrator/source; \
+	docker build -t orchestrator:latest orchestrator/source -f orchestrator/source/docker/Dockerfile; \
 	docker-compose build $(name); \
 	ln -fs ../orchestrator/source/resources/bin/orchestrator-client scripts/orchestrator-client
 
@@ -12,10 +12,18 @@ build: ## Build the containers
 up: ## Run all containers
 	docker-compose up $(name)
 
+.PHONY: up_replicator
+up_replicator: ## Run MySQL - Tarantool replicator
+	docker-compose -f docker-compose.repl.yaml up
+
 .PHONY: down
 down: ## Stop all containers
 	docker rm -f $$(docker ps -aq --filter name=replica*); \
 	docker-compose down -v;
+
+.PHONY: down_replicator
+down_replicator: ## Stop MySQL - Tarantool replicator
+	docker-compose -f docker-compose.repl.yaml down -v
 
 .PHONY: clean
 clean: ## Stop all containers and clean volumes and local images

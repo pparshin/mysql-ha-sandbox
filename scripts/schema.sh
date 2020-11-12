@@ -19,5 +19,5 @@ CREATE TABLE IF NOT EXISTS cluster (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO cluster (anchor, cluster_name, cluster_domain) 
-VALUES (1, 'db_test', '172.20.0.200') ON DUPLICATE KEY UPDATE cluster_name=VALUES(cluster_name), cluster_domain=VALUES(cluster_domain);
+VALUES (1, 'db_test', '172.20.0.200') ON DUPLICATE KEY UPDATE anchor=VALUES(anchor), cluster_name=VALUES(cluster_name), cluster_domain=VALUES(cluster_domain);
 "

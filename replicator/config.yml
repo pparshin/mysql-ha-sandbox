@@ -1,0 +1,43 @@
+app:
+  listen_addr: ':8080'
+  data_file: '/etc/mysql-tarantool/state.info'
+  health:
+    seconds_behind_master: 10
+  logging:
+    level: 'debug'
+    syslog_enabled: false
+    file_enabled: false
+    file_name: '/var/log/mysql-tarantool-replicator.log'
+    file_max_size: 256
+    file_max_backups: 3
+    file_max_age: 5
+
+replication:
+  server_id: 100
+  gtid_mode: true
+
+  mysql:
+    dump:
+      exec_path: '/usr/bin/mysqldump'
+      skip_master_data: false
+    addr: '172.20.0.200:3306'
+    user: 'admin'
+    password: 'admin'
+    charset: 'utf8'
+
+  tarantool:
+    addr: 'tarantool:3301'
+    user: 'repl'
+    password: 'repl'
+    max_retries: 3
+    connect_timeout: '500ms'
+    request_timeout: '500ms'
+
+  mappings:
+    - source:
+        schema: 'sandbox'
+        table: 'test'
+        columns:
+          - ts
+      dest:
+        space: 'sandbox'
